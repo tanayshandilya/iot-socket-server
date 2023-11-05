@@ -59,6 +59,7 @@ io.sockets.on('connection', (socket) => {
     db.read()
       .then(() => {
         db.data.client.messages.push({
+          type: 'o',
           content: msg.message,
           timestamp: new Date().toJSON(),
         })
@@ -68,6 +69,10 @@ io.sockets.on('connection', (socket) => {
               events.device.stream,
               msg.message
             )
+            io.to(socket.id).emit(events.client.stream, {
+              type: 'client-message',
+              data: db.data.client.messages,
+            })
           })
           .catch(logError)
       })
@@ -101,6 +106,7 @@ io.sockets.on('connection', (socket) => {
     db.read()
       .then(() => {
         db.data.device.messages.push({
+          type: 'i',
           content: msg,
           timestamp: new Date().toJSON(),
         })

@@ -16,13 +16,28 @@ import { RightCircleOutlined, LeftCircleOutlined } from '@ant-design/icons'
 function MessageCard({ type, message, dateTime, ...rest }) {
   return (
     <Card
-      style={{ marginBottom: 20 }}
-      bodyStyle={{ display: 'flex', alignItems: 'center' }}
+      style={{
+        marginBottom: 5,
+        background: type === 'i' ? '#fffbe6' : '#e6f4ff',
+        borderColor: type === 'i' ? '#ffe58f' : '#91caff',
+      }}
+      bodyStyle={{
+        background: 'rgba(0, 0, 0, 0.02)',
+        padding: '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+      }}
       {...rest}
     >
-      <pre style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+      <pre
+        style={{
+          margin: 0,
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
         <span>
-          {type === 'i' ? <RightCircleOutlined /> : <LeftCircleOutlined />}
+          {type === 'i' ? <LeftCircleOutlined /> : <RightCircleOutlined />}
         </span>
         <span style={{ marginLeft: 10, marginRight: 10 }}>{message}</span>
         <Tag>{dateTime}</Tag>
@@ -33,6 +48,7 @@ function MessageCard({ type, message, dateTime, ...rest }) {
 
 export default function HomePage() {
   const [device, setDevice] = useState(null)
+  const [cMessages, setCMessages] = useState([])
   const [messages, setMessages] = useState([])
   const [isDeviceConnected, setDeviceConnected] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
@@ -44,14 +60,6 @@ export default function HomePage() {
     socket.emit('client-stream', {
       message: inputRef.current.input.value,
     })
-    setMessages([
-      ...messages,
-      {
-        content: inputRef.current.input.value,
-        type: 'o',
-        timestamp: new Date().toJSON(),
-      },
-    ])
     formRef.current.reset()
     inputRef.current.input.value = ''
   }
@@ -80,10 +88,10 @@ export default function HomePage() {
         setDeviceConnected(true)
         return
       case 'device-message':
-        for (let i = 0; i < data.data.length; i++) {
-          data.data[i].type = 'i'
-        }
         setMessages(data.data)
+        return
+      case 'client-message':
+        setCMessages(data.data)
         return
       default:
         console.log(data)
@@ -129,34 +137,74 @@ export default function HomePage() {
             </div>
           </Card>
         </Col>
-        <Col md={24} style={{ marginTop: 20 }}>
+        <Col md={24}>
           <Card>
-            <form onSubmit={onSendMessage} ref={formRef}>
+            <form
+              style={{ display: 'flex', gap: 10 }}
+              onSubmit={onSendMessage}
+              ref={formRef}
+            >
               <Input placeholder='Send Message to device' ref={inputRef} />
               <Button htmlType='submit'>Send Message</Button>
             </form>
           </Card>
         </Col>
-        <Col md={24} style={{ marginTop: 20 }}>
+        <Col md={12} style={{ marginTop: 20 }}>
           <Card bodyStyle={{ maxHeight: '100%', overflowY: 'auto' }}>
             <Typography.Text
               strong
               type={isDeviceConnected ? 'success' : 'danger'}
               style={{ display: 'block', marginRight: 10 }}
             >
-              Device {isDeviceConnected ? 'Connected' : 'Disconnected'}
+              Device {isDeviceConnected ? 'Messages' : 'Disconnected'}
             </Typography.Text>
             <hr />
             {device !== null ? (
-              <div>
-                <Tag>{device?.id}</Tag>
+              <>
+                <div>
+                  <Typography.Text>Device Id - </Typography.Text>
+                  <Tag>{device?.id}</Tag>
+                </div>
                 <hr />
-              </div>
+              </>
             ) : (
               ''
             )}
             {messages.length
               ? messages.map((m, i) => (
+                  <MessageCard
+                    key={i}
+                    type={m.type}
+                    message={m.content}
+                    dateTime={m.timestamp}
+                  />
+                ))
+              : ''}
+          </Card>
+        </Col>
+        <Col md={12} style={{ marginTop: 20 }}>
+          <Card bodyStyle={{ maxHeight: '100%', overflowY: 'auto' }}>
+            <Typography.Text
+              strong
+              type={isDeviceConnected ? 'success' : 'danger'}
+              style={{ display: 'block', marginRight: 10 }}
+            >
+              Sent Messages
+            </Typography.Text>
+            <hr />
+            {device !== null ? (
+              <>
+                <div>
+                  <Typography.Text>Device Id - </Typography.Text>
+                  <Tag>{device?.id}</Tag>
+                </div>
+                <hr />
+              </>
+            ) : (
+              ''
+            )}
+            {cMessages.length
+              ? cMessages.map((m, i) => (
                   <MessageCard
                     key={i}
                     type={m.type}
