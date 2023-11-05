@@ -1,0 +1,9 @@
+body {
+  margin: 0;
+  background-color: #fefefe;
+}
+
+label {
+  font-size: 12px;
+  display: block;
+}
